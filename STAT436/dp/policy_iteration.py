@@ -49,14 +49,15 @@ class pi_dynamics:
         else:
             # iterative approximation
             v_init = np.zeros((12, ))
-            v_new = self.P_reward @ self.reward + self.gamma * self.P_value @ v_init
+            v_reward = self.P_reward @ self.reward
+            v_new = v_reward + self.gamma * self.P_value @ v_init
 
             advances = np.inf
             n_it = 0
 
-            while advances > eps or n_it <= 10:
+            while advances > eps or n_it <= 2:
                 v_init = v_new
-                v_new = self.P_reward @ self.reward + self.gamma * self.P_value @ v_init
+                v_new = v_reward + self.gamma * self.P_value @ v_init
                 advances = np.sum(np.abs(v_new - v_init))
                 n_it += 1
             
@@ -104,23 +105,23 @@ def policy_iteration(pi, gamma, reward, dynamics, eps=1e-8):
     action_value_old = dynamics_old.compute_action_value(exact=False) # policy evaluation
     pi_new = update_policy(pi, action_value_old) # policy improvement
     dynamics_new = pi_dynamics(pi_new, gamma, reward, init_dynamics)
-    state_value_new = dynamics_new.compute_state_value(eps=1e-8)
+    state_value_new = dynamics_new.compute_state_value(exact=False, eps=eps)
     action_value_new = dynamics_new.compute_action_value(exact=False)
 
     advances = np.inf
     n_it = 0
 
-    while np.sum(advances) > eps or n_it <= 3:
+    while advances > eps or n_it <= 2:
         
         state_value_old = state_value_new
         action_value_old = action_value_new
         pi_old = pi_new
         pi_new = update_policy(pi_old, action_value_new)
         dynamics_new = pi_dynamics(pi_new, gamma=gamma, reward=reward, dynamics=init_dynamics)
-        state_value_new = dynamics_new.compute_state_value(eps=eps)
+        state_value_new = dynamics_new.compute_state_value(exact=False, eps=eps)
         action_value_new = dynamics_new.compute_action_value(exact=False)
         
-        advances = state_value_new - state_value_old
+        advances = np.sum(np.abs(state_value_new - state_value_old))
         n_it += 1
 
     print("Policy iteration converged. (iteration={}, eps={})".format(n_it, np.sum(advances)))

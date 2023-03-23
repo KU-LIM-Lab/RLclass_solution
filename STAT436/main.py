@@ -35,8 +35,8 @@ if __name__ == "__main__":
     # value iteration
     print("\nUpdating Policy via Value Iteration")
     start_time = time.time()
-    init_action_value = np.zeros_like(action_value)
-    optimal_action_value = value_iteration(init_action_value, gamma, reward, init_dynamics, eps=1e-3)
+    init_action_value = action_value
+    optimal_action_value = value_iteration(init_action_value, gamma, reward, init_dynamics, eps=1e-8)
     end_time = time.time()
     computation_time = end_time - start_time
     print("Wall-clock time for Value Iteration: {} sec\n".format(np.round(computation_time, 4)))

@@ -97,29 +97,31 @@ def update_policy(policy, action_value):
 # policy iteration
 def policy_iteration(pi, gamma, reward, dynamics, eps=1e-8):
 
+    # init policy evaluation
     init_dynamics = dynamics
     dynamics_old = pi_dynamics(pi, gamma, reward, init_dynamics)
-    action_value_old = dynamics_old.compute_action_value(exact=False) # policy evaluation
-    pi_new = update_policy(pi, action_value_old) # policy improvement
-    dynamics_new = pi_dynamics(pi_new, gamma, reward, init_dynamics)
-    state_value_new = dynamics_new.compute_state_value(exact=False, eps=eps)
-    action_value_new = dynamics_new.compute_action_value(exact=False)
-
+    state_value_old = dynamics_old.compute_state_value(exact=False)  
+    action_value_old = dynamics_old.compute_action_value(exact=False)
+    
     advances = np.inf
     n_it = 0
 
     while advances > eps or n_it <= 2:
         
-        state_value_old = state_value_new
-        action_value_old = action_value_new
-        pi_old = pi_new
-        pi_new = update_policy(pi_old, action_value_new)
+        # policy improvement
+        pi_new = update_policy(pi, action_value_old)
         dynamics_new = pi_dynamics(pi_new, gamma=gamma, reward=reward, dynamics=init_dynamics)
+        
+        # policy evaluation
         state_value_new = dynamics_new.compute_state_value(exact=False, eps=eps)
         action_value_new = dynamics_new.compute_action_value(exact=False)
-        
         advances = np.sum(np.abs(state_value_new - state_value_old))
         n_it += 1
+
+        # save policy and values
+        pi = pi_new
+        state_value_old = state_value_new
+        action_value_old = action_value_new
 
     print("Policy iteration converged. (iteration={}, eps={})".format(n_it, np.sum(advances)))
 

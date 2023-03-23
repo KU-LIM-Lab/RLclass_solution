@@ -21,58 +21,58 @@ class dynamics:
     def __init__(self):
         # state, next_state, action, reward
         self.dynamics = np.zeros((12, 12, 4, 3)) 
-        self.dynamics = self.return_dynamics()
+        self.dynamics = self.update_dynamics(self.dynamics)
         
-    def return_dynamics(self):
+    def update_dynamics(self, dynamics):
         for i in range(12):
             # press 'up'
             if compute_position(i)[0] == 0: # top row
-                self.dynamics[i, i, 0, 1] += 0.8
+                dynamics[i, i, 0, 1] += 0.8
             elif i == 9: # wall
-                self.dynamics[i, i, 0, 1] += 0.8
+                dynamics[i, i, 0, 1] += 0.8
             else:
                 if i not in [3, 5, 7]:
                     position = compute_position(i) - np.array([1, 0])
-                    self.dynamics[i, reverse_position(position), 0, 1] += 0.8
+                    dynamics[i, reverse_position(position), 0, 1] += 0.8
             # press 'left'
             if compute_position(i)[1] == 0: # top left
-                self.dynamics[i, i, 0, 1] += 0.1
-                self.dynamics[i, i, 1, 1] += 1
+                dynamics[i, i, 0, 1] += 0.1
+                dynamics[i, i, 1, 1] += 1
             elif i == 6: # wall
-                self.dynamics[i, i, 0, 1] += 0.1
-                self.dynamics[i, i, 1, 1] += 1
+                dynamics[i, i, 0, 1] += 0.1
+                dynamics[i, i, 1, 1] += 1
             else:
                 if i not in [3, 5, 7]:
                     position = compute_position(i) - np.array([0, 1])
-                    self.dynamics[i, reverse_position(position), 0, 1] += 0.1
-                    self.dynamics[i, reverse_position(position), 1, 1] += 1
+                    dynamics[i, reverse_position(position), 0, 1] += 0.1
+                    dynamics[i, reverse_position(position), 1, 1] += 1
             # press 'right'
             if compute_position(i)[1] == 3: # top-right column
-                self.dynamics[i, i, 0, 1] += 0.1
-                self.dynamics[i, i, 2, 1] += 1
+                dynamics[i, i, 0, 1] += 0.1
+                dynamics[i, i, 2, 1] += 1
             elif i == 4: # wall
-                self.dynamics[i, i, 0, 1] += 0.1
-                self.dynamics[i, i, 2, 1] += 1
+                dynamics[i, i, 0, 1] += 0.1
+                dynamics[i, i, 2, 1] += 1
             else:
                 position = compute_position(i) + np.array([0, 1])
                 if i not in [3, 5, 7]:
-                    self.dynamics[i, reverse_position(position), 0, 1] += 0.1
-                    self.dynamics[i, reverse_position(position), 2, 1] += 1
+                    dynamics[i, reverse_position(position), 0, 1] += 0.1
+                    dynamics[i, reverse_position(position), 2, 1] += 1
             # press 'down'
             if compute_position(i)[0] == 2: # buttom row
-                self.dynamics[i, i, 3, 1] += 1
+                dynamics[i, i, 3, 1] += 1
             elif i == 1: # wall
-                self.dynamics[i, i, 3 ,1] += 1
+                dynamics[i, i, 3 ,1] += 1
             else:
                 if i not in [3, 5, 7]:
                     position = compute_position(i) + np.array([1, 0])
-                    self.dynamics[i, reverse_position(position), 3, 1] += 1
+                    dynamics[i, reverse_position(position), 3, 1] += 1
             if i in [3, 5, 7]: # end, wall cases
-                self.dynamics[i, :, :, :] = 0 # absorbing state
+                dynamics[i, :, :, :] = 0 # absorbing state
                 if i == 3:
-                    self.dynamics[i, 8, :, 0] = 1 # goal state
+                    dynamics[i, 8, :, 0] = 1 # goal state
                 if i == 5:
-                    self.dynamics[i, i, :, 1] = 1 # wall
+                    dynamics[i, i, :, 1] = 1 # wall
                 if i == 7:
-                    self.dynamics[i, 8, :, 2] = 1 # trap state
-        return self.dynamics
+                    dynamics[i, 8, :, 2] = 1 # trap state
+        return dynamics

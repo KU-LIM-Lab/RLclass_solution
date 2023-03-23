@@ -39,14 +39,34 @@ class pi_dynamics:
     def return_all(self):
         return self.update_pi_dynamics(self.pi_dynamics), self.compute_P_reward(self.P_reward), self.compute_P_value(self.P_value)
 
-    def compute_state_value(self):
-        coeff = np.eye(12) - self.gamma * self.P_value
-        inv_coeff = np.linalg.inv(coeff)
-        state_value = inv_coeff @ self.P_reward @ self.reward
+    def compute_state_value(self, exact=False, eps=1e-8):
+        if exact:
+            # closed-form formula
+            coeff = np.eye(12) - self.gamma * self.P_value
+            inv_coeff = np.linalg.inv(coeff) 
+            state_value = inv_coeff @ self.P_reward @ self.reward
+
+        else:
+            # iterative approximation
+            v_init = np.zeros((12, ))
+            v_new = self.P_reward @ self.reward + self.gamma * self.P_value @ v_init
+
+            advances = np.inf
+            n_it = 0
+
+            while advances > eps or n_it <= 10:
+                v_init = v_new
+                v_new = self.P_reward @ self.reward + self.gamma * self.P_value @ v_init
+                advances = np.sum(np.abs(v_new - v_init))
+                n_it += 1
+            
+            state_value = v_new
+
         return state_value
 
-    def compute_action_value(self):
-        state_value = self.compute_state_value()
+    def compute_action_value(self, exact=False):
+        
+        state_value = self.compute_state_value(exact=exact)
         expectation_reward = np.zeros((12, 4))
         expectation_value = np.zeros((12, 4))
         for i in range(12):
@@ -80,26 +100,29 @@ def update_policy(policy, action_value):
 def policy_iteration(pi, gamma, reward, dynamics, eps=1e-8):
 
     init_dynamics = dynamics
-    init_pi_dynamics = pi_dynamics(pi, gamma, reward, init_dynamics)
-    action_value = init_pi_dynamics.compute_action_value()
-
-    pi_old = pi
-    pi_new = update_policy(pi, action_value)
+    dynamics_old = pi_dynamics(pi, gamma, reward, init_dynamics)
+    action_value_old = dynamics_old.compute_action_value(exact=False) # policy evaluation
+    pi_new = update_policy(pi, action_value_old) # policy improvement
+    dynamics_new = pi_dynamics(pi_new, gamma, reward, init_dynamics)
+    state_value_new = dynamics_new.compute_state_value(eps=1e-8)
+    action_value_new = dynamics_new.compute_action_value(exact=False)
 
     advances = np.inf
     n_it = 0
 
-    while np.sum(advances) > eps:
-        dynamics_old = pi_dynamics(pi=pi_old, gamma=gamma, reward=reward, dynamics=dynamics)
-        dynamics_new = pi_dynamics(pi=pi_new, gamma=gamma, reward=reward, dynamics=dynamics)
-        state_value_old = dynamics_old.compute_state_value()
-        state_value_new = dynamics_new.compute_state_value()
-        action_value_new = dynamics_new.compute_action_value()
+    while np.sum(advances) > eps or n_it <= 3:
+        
+        state_value_old = state_value_new
+        action_value_old = action_value_new
         pi_old = pi_new
-        pi_new = update_policy(pi_new, action_value_new)
+        pi_new = update_policy(pi_old, action_value_new)
+        dynamics_new = pi_dynamics(pi_new, gamma=gamma, reward=reward, dynamics=init_dynamics)
+        state_value_new = dynamics_new.compute_state_value(eps=eps)
+        action_value_new = dynamics_new.compute_action_value(exact=False)
+        
         advances = state_value_new - state_value_old
         n_it += 1
 
-    print("Policy iteration converged. (iteration={}, eps={})\n".format(n_it, np.sum(advances)))
+    print("Policy iteration converged. (iteration={}, eps={})".format(n_it, np.sum(advances)))
 
     return pi_new, state_value_new, action_value_new

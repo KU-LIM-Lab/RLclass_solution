@@ -88,13 +88,10 @@ def update_policy(policy, action_value):
     greedy_policy = np.zeros_like(policy)
 
     for state in range(12):
-        if state in [3, 5, 7]:
-            action = np.array([0.25, 0.25, 0.25, 0.25])
-        else:
-            action = np.argmax(action_value[state, :])
-            action = one_hot(action, 4)
+        action = np.argmax(action_value[state, :])
+        action = one_hot(action, 4)
         greedy_policy[state] = action
-    
+
     return greedy_policy
 
 # policy iteration

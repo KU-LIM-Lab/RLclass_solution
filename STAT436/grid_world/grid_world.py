@@ -182,7 +182,7 @@ class Agent:
         self.env = environment()
         self.isEnd = self.env.isEnd
 
-    def play(self, rounds):
+    def play(self, rounds, stat=False):
         i=0
         self.result_stat = []
         while i < rounds:
@@ -198,7 +198,7 @@ class Agent:
                 self.env = self.takeAction(action)
                 self.env.isEndFunc()
                 self.isEnd = self.env.isEnd
-        if rounds > 1: # stat mode
+        if rounds > 1 and stat: # stat mode
             success_rate = self.result_stat.count(1) / rounds
             print("Success rate:{} %".format(success_rate * 100))
         return self.history, self.result_stat

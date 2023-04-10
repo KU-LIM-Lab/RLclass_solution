@@ -31,7 +31,7 @@ def transform_trajectory_memory(trajectory):
 
     return trajectory_
 
-def mc_eval(history, reward_stat, gamma, update=0.999):
+def mc_eval(history, reward_stat, gamma, update=0.9):
     """
     input: history
     output: value estimation
@@ -74,12 +74,12 @@ def update_policy(policy, action_value):
     return greedy_policy
 
 # Policy Improvement w/ MC
-def mc_policy_iteration(pi_init, agent, gamma, eps=1e-8, epsilon=None):
+def mc_policy_iteration(pi_init, agent, gamma, eps=1e-8, play_num=100, epsilon=None):
 
     # call policy eval
     pi = pi_init
     agent_ = agent(pi_init)
-    history, reward_stat = agent_.play(100)
+    history, reward_stat = agent_.play(play_num, stat=False)
     action_value_old = mc_eval(history, reward_stat, gamma)
 
     advances = np.inf
@@ -92,15 +92,15 @@ def mc_policy_iteration(pi_init, agent, gamma, eps=1e-8, epsilon=None):
 
         # policy evaluation
         agent_ = agent(pi_new, epsilon)
-        history, reward_stat = agent_.play(100)
+        history, reward_stat = agent_.play(play_num)
         action_value_new = mc_eval(history, reward_stat, gamma)
         advances = np.sum(np.abs(action_value_old - action_value_new))
-        n_it += 1
 
-        # save policy and values
+        # save policy and update values
         pi = pi_new
         action_value_old = action_value_new
+        n_it += 1
 
-    print("Policy iteration converged. (iteration={}, eps={})".format(n_it, np.sum(advances)))
+    print("Policy iteration converged. (iteration={}, error={})".format(play_num * (n_it + 1), advances))
 
     return pi_new, action_value_new

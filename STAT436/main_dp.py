@@ -1,7 +1,7 @@
 from grid_world.grid_world import *
 from grid_world.dynamics import *
-from dp.policy_iteration import *
-from dp.value_iteration import *
+from DP.policy_iteration import *
+from DP.value_iteration import *
 import time
 
 if __name__ == "__main__":
@@ -11,8 +11,8 @@ if __name__ == "__main__":
     pi = np.reshape(np.tile(pi, 12), (12, 4))
     # reward
     reward = np.array([1, 0 ,-1])
+
     # initial dynamics with randomAgent
-    
     init_dynamics = dynamics
     init_pi_dynamics = pi_dynamics(pi, gamma, reward, init_dynamics)
     state_value = init_pi_dynamics.compute_state_value(exact=True)

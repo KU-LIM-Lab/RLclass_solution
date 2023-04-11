@@ -10,7 +10,7 @@ if __name__ == "__main__":
     
     print("\nUpdating Policy via Policy Iteration w/ Monte-Carlo")
     start_time = time.time()
-    pi_new, action_value_new = mc_policy_iteration(pi, Agent, gamma, play_num=3, epsilon=0.05)
+    pi_new, action_value_new = mc_policy_iteration(pi, Agent, gamma, play_num=100, epsilon=0.05)
     end_time = time.time()
     computation_time = end_time - start_time
     print("Wall-clock time for Policy Iteration: {} sec\n".format(np.round(computation_time, 4)))

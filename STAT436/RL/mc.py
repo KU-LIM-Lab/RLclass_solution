@@ -31,7 +31,7 @@ def transform_trajectory_memory(trajectory):
 
     return trajectory_
 
-def mc_eval(history, reward_stat, gamma, update=0.9):
+def mc_eval(history, reward_stat, gamma, update=0.99):
     """
     input: history
     output: value estimation
@@ -61,14 +61,29 @@ def one_hot(scalar, dim):
     vec[scalar] = 1
     return vec
 
+def greedy_action(array, dim):
+    vec = np.zeros(dim)
+    array_size = array.shape[0]
+    for _ in array:
+        vec[_] = 1 / array_size
+
+    return vec
+
+def argmax(vec, tie=True):
+    if tie:
+        return np.where(vec == np.max(vec))[0]
+    else: # ordinary argmax
+        return np.argmax(vec)
+
 # update policy w/ greedy policy
 def update_policy(policy, action_value):
 
     greedy_policy = np.zeros_like(policy)
 
     for state in range(12):
-        action = np.argmax(action_value[state, :])
-        action = one_hot(action, 4)
+
+        action = argmax(action_value[state, :])
+        action = greedy_action(action, 4)
         greedy_policy[state] = action
 
     return greedy_policy
@@ -79,8 +94,8 @@ def mc_policy_iteration(pi_init, agent, gamma, eps=1e-8, play_num=100, epsilon=N
     # call policy eval
     pi = pi_init
     agent_ = agent(pi_init)
-    history, reward_stat = agent_.play(play_num, stat=False)
-    action_value_old = mc_eval(history, reward_stat, gamma)
+    history, reward_stat, _ = agent_.play(play_num, stat=False)
+    action_value = mc_eval(history, reward_stat, gamma)
 
     advances = np.inf
     n_it = 0
@@ -88,19 +103,28 @@ def mc_policy_iteration(pi_init, agent, gamma, eps=1e-8, play_num=100, epsilon=N
     while advances > eps or n_it <= 2:
         
         # policy improvement
-        pi_new = update_policy(pi, action_value_old)
+        pi_new = update_policy(pi, action_value)
 
         # policy evaluation
         agent_ = agent(pi_new, epsilon)
-        history, reward_stat = agent_.play(play_num)
+        history, reward_stat, success_rate = agent_.play(play_num, stat=True)
         action_value_new = mc_eval(history, reward_stat, gamma)
-        advances = np.sum(np.abs(action_value_old - action_value_new))
+
+        # stop condition
+        advances = action_value_new - action_value
+        # advances = advances * (advances > 0)
+        advances = np.abs(action_value_new - action_value)
+        advances = np.sum(advances)
 
         # save policy and update values
         pi = pi_new
-        action_value_old = action_value_new
+        action_value = action_value_new
         n_it += 1
+        epsilon /= n_it
 
-    print("Policy iteration converged. (iteration={}, error={})".format(play_num * (n_it + 1), advances))
+        if n_it % 10 == 0:
+            print("Iteration: {}, Success rate:{} %, Error: {}, eps: {}".format(play_num * n_it, success_rate * 100, advances, epsilon))
+
+    print("Monte-Carlo Policy Iteration converged. (Iteration={}, Error={})".format(play_num * n_it, advances))
 
     return pi_new, action_value_new

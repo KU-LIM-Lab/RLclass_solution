@@ -161,15 +161,14 @@ class Agent:
         self.result_stat = []
         self.policy = policy
         self.history = []
-        self.epsilon=epsilon
+        self.epsilon=epsilon # epsilon-soft
 
     def Action(self, state):
-        # action = np.random.choice(self.actions)
         state = reverse_position(state)
         action = np.random.choice(self.actions, p=self.policy[state,:])
         if self.epsilon is not None:
             prob = np.random.uniform(0, 1)
-            if prob < self.epsilon:
+            if prob < self.epsilon: # epsilon-soft policy
                 action = np.random.choice(self.actions)
         return action
 
@@ -200,8 +199,10 @@ class Agent:
                 self.isEnd = self.env.isEnd
         if rounds > 1 and stat: # stat mode
             success_rate = self.result_stat.count(1) / rounds
-            print("Success rate:{} %".format(success_rate * 100))
-        return self.history, self.result_stat
+        else:
+            success_rate = None
+
+        return self.history, self.result_stat, success_rate
     
     def show_policy(self):
         action = policy_to_action(self.policy)

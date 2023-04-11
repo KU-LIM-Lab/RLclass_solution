@@ -94,7 +94,9 @@ def mc_policy_iteration(pi_init, agent, gamma, eps=1e-8, play_num=100, epsilon=N
     # call policy eval
     pi = pi_init
     agent_ = agent(pi_init)
-    history, reward_stat, _ = agent_.play(play_num, stat=False)
+    epsilon_init = epsilon
+    history, reward_stat, success_rate = agent_.play(play_num, stat=False)
+    print("Iteration: 0, Success rate:{} %".format(success_rate * 100))
     action_value = mc_eval(history, reward_stat, gamma)
 
     advances = np.inf
@@ -107,7 +109,7 @@ def mc_policy_iteration(pi_init, agent, gamma, eps=1e-8, play_num=100, epsilon=N
 
         # policy evaluation
         agent_ = agent(pi_new, epsilon)
-        history, reward_stat, success_rate = agent_.play(play_num, stat=True)
+        history, reward_stat, success_rate = agent_.play(play_num, stat=False)
         action_value_new = mc_eval(history, reward_stat, gamma)
 
         # stop condition
@@ -120,7 +122,7 @@ def mc_policy_iteration(pi_init, agent, gamma, eps=1e-8, play_num=100, epsilon=N
         pi = pi_new
         action_value = action_value_new
         n_it += 1
-        epsilon /= n_it
+        epsilon = epsilon_init / n_it
 
         if n_it % 10 == 0:
             print("Iteration: {}, Success rate:{} %, Error: {}, eps: {}".format(play_num * n_it, success_rate * 100, advances, epsilon))

@@ -197,13 +197,13 @@ class Agent:
                 self.env = self.takeAction(action)
                 self.env.isEndFunc()
                 self.isEnd = self.env.isEnd
-        if rounds > 1 and stat: # stat mode
-            success_rate = self.result_stat.count(1) / rounds
+        
+        success_rate = self.result_stat.count(1) / rounds
+        if stat: # stat mode
+            return success_rate
         else:
-            success_rate = None
+            return self.history, self.result_stat, success_rate
 
-        return self.history, self.result_stat, success_rate
-    
     def show_policy(self):
         action = policy_to_action(self.policy)
         self.env.show_action_board(action)
